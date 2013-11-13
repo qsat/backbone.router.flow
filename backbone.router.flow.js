@@ -8,8 +8,12 @@
       defs: [],
       visited: [],
       pushDefer: function(defer) {
-        this.defs.push(defer);
-        return defer;
+        if (defer) {
+          this.defs.push(defer);
+          return defer;
+        } else {
+          return new Deferred().resolve();
+        }
       },
       debug: true,
       log: function() {
@@ -71,39 +75,46 @@
           args = null;
         }
         this.log("\n=================", this.url = url = this.getCurrentUrl());
+        args = _.toArray(args);
         this.prevDefer = this.getPrevDefer();
         defer = this.prevDefer.then(function() {
-          var d, _ref;
-          if (!_this.prevObj) {
+          if (!(_this.prevUrl || _this.prevObj)) {
             return;
           }
-          if (_this.prevUrl) {
-            _this.log("  LEAVING", _this.prevUrl);
+          _this.log("  LEAVING", _this.prevUrl);
+          return _this.pushDefer(typeof _this.beforeEachLeave === "function" ? _this.beforeEachLeave(_this.prevObj, url, _this.prevUrl) : void 0);
+        }).then(function() {
+          var d, _ref;
+          if (!(_this.prevUrl || _this.prevObj)) {
+            return;
           }
           d = _this.pushDefer((_ref = _this.prevObj) != null ? _ref.leave(_this) : void 0);
-          return d != null ? d.done(function() {
+          return d.done(function() {
             return _this.log("  LEAVED", _this.prevUrl);
-          }) : void 0;
+          });
         }).then(function() {
-          return _this.pushDefer(typeof _this.beforeEach === "function" ? _this.beforeEach(c, url, _this.prevUrl) : void 0);
+          if (!(_this.prevUrl || _this.prevObj)) {
+            return;
+          }
+          return _this.pushDefer(typeof _this.afterEachLeave === "function" ? _this.afterEachLeave(_this, _this.prevObj, url, _this.prevUrl) : void 0);
+        }).then(function() {
+          return _this.pushDefer(typeof _this.beforeEachEnter === "function" ? _this.beforeEachEnter(_this, c, url, _this.prevUrl) : void 0);
         }).then(function() {
           var d;
           _this.log("  ENTERING", url);
+          args.concat([c, url, _this.prevUrl]);
           d = _this.pushDefer(c.enter.apply(c, Array.prototype.concat([_this], args)));
-          return d != null ? typeof d.done === "function" ? d.done(function() {
+          return d.done(function() {
             return _this.log("  ENTERED", url);
-          }) : void 0 : void 0;
+          });
         }).then(function() {
           var d;
-          d = _this.pushDefer(typeof _this.afterEach === "function" ? _this.afterEach(c, url) : void 0);
+          d = _this.pushDefer(typeof _this.afterEachEnter === "function" ? _this.afterEachEnter(_this, c, url, _this.prevUrl) : void 0);
           _this.prevObj = null;
           _this.prevUrl = url;
           _this.visited.push(url);
           return d;
         });
-        if (!defer) {
-          defer = c.enter.apply(c, Array.prototype.concat([this], args));
-        }
         return this.prevDefer = defer.then(function() {
           _this.prevObj = c;
           return _this.log("------- ACTIVATED " + url + "\n\n");

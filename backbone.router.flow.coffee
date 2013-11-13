@@ -6,8 +6,11 @@
       defs: []
       visited: []
       pushDefer: (defer)->
-        @defs.push defer
-        defer
+        if defer
+          @defs.push defer
+          defer
+        else
+          new Deferred().resolve()
 
       debug: true
       log: -> console.log.apply console, arguments if @debug
@@ -46,33 +49,40 @@
 
       activate: (c, args = null) ->
         @log "\n=================", @url = url = @getCurrentUrl()
+        args = _.toArray args
 
         @prevDefer = @getPrevDefer()
 
         defer = @prevDefer
           .then =>
-            return if not @prevObj
-            @log "  LEAVING", @prevUrl if @prevUrl
-            d = @pushDefer @prevObj?.leave(@)
-            d?.done => @log "  LEAVED", @prevUrl
+            return unless @prevUrl or @prevObj
+            @log "  LEAVING", @prevUrl
+            @pushDefer @beforeEachLeave?(@prevObj, url, @prevUrl)
 
           .then =>
-            @pushDefer @beforeEach?(c, url, @prevUrl)
+            return unless @prevUrl or @prevObj
+            d = @pushDefer @prevObj?.leave(@)
+            d.done => @log "  LEAVED", @prevUrl
+
+          .then =>
+            return unless @prevUrl or @prevObj
+            @pushDefer @afterEachLeave?(@, @prevObj, url, @prevUrl)
+            
+          .then =>
+            @pushDefer @beforeEachEnter?(@, c, url, @prevUrl)
 
           .then =>
             @log "  ENTERING", url
+            args.concat [c, url, @prevUrl]
             d = @pushDefer c.enter.apply c, Array::concat([@], args)
-            d?.done? => @log "  ENTERED", url
+            d.done => @log "  ENTERED", url
 
           .then =>
-            d = @pushDefer @afterEach?(c, url)
+            d = @pushDefer @afterEachEnter?(@, c, url, @prevUrl)
             @prevObj = null
             @prevUrl = url
             @visited.push url
             d
-
-        if not defer
-          defer = c.enter.apply c, Array::concat([@], args)
 
         @prevDefer = defer.then =>
           @prevObj = c
