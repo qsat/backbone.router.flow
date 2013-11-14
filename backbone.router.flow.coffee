@@ -6,7 +6,7 @@
       defs: []
       visited: []
       pushDefer: (defer)->
-        if defer
+        if defer and defer.done
           @defs.push defer
           defer
         else
@@ -49,7 +49,6 @@
 
       activate: (c, args = null) ->
         @log "\n=================", @url = url = @getCurrentUrl()
-        args = _.toArray args
 
         @prevDefer = @getPrevDefer()
 
@@ -73,8 +72,8 @@
 
           .then =>
             @log "  ENTERING", url
-            args.concat [c, url, @prevUrl]
-            d = @pushDefer c.enter.apply c, Array::concat([@], args)
+            args = _.compact [].concat [@, args, c, url, @prevUrl]
+            d = @pushDefer c.enter.apply c, args
             d.done => @log "  ENTERED", url
 
           .then =>
