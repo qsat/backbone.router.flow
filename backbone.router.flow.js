@@ -8,7 +8,7 @@
       defs: [],
       visited: [],
       pushDefer: function(defer) {
-        if (defer) {
+        if (defer && defer.done) {
           this.defs.push(defer);
           return defer;
         } else {
@@ -75,7 +75,6 @@
           args = null;
         }
         this.log("\n=================", this.url = url = this.getCurrentUrl());
-        args = _.toArray(args);
         this.prevDefer = this.getPrevDefer();
         defer = this.prevDefer.then(function() {
           if (!(_this.prevUrl || _this.prevObj)) {
@@ -102,8 +101,8 @@
         }).then(function() {
           var d;
           _this.log("  ENTERING", url);
-          args.concat([c, url, _this.prevUrl]);
-          d = _this.pushDefer(c.enter.apply(c, Array.prototype.concat([_this], args)));
+          args = _.compact([].concat([_this, args, c, url, _this.prevUrl]));
+          d = _this.pushDefer(c.enter.apply(c, args));
           return d.done(function() {
             return _this.log("  ENTERED", url);
           });
