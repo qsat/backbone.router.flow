@@ -24,15 +24,6 @@
       isFirstTime: function() {
         return this.prevDefer === void 0;
       },
-      getPrevDefer: function() {
-        var d;
-        if (this.isFirstTime()) {
-          d = typeof this.firstTime === "function" ? this.firstTime() : void 0;
-        }
-        return (this.prevDefer || new Deferred().resolve()).then(function() {
-          return d;
-        });
-      },
       getCurrentUrl: function(l) {
         if (l == null) {
           l = location;
@@ -75,7 +66,7 @@
           args = null;
         }
         this.log("\n=================", this.url = url = this.getCurrentUrl());
-        this.prevDefer = this.getPrevDefer();
+        this.prevDefer = this.pushDefer(this.isFirstTime() ? typeof this.firstTime === "function" ? this.firstTime(c, url) : void 0 : this.prevDefer);
         defer = this.prevDefer.then(function() {
           if (!(_this.prevUrl || _this.prevObj)) {
             return;

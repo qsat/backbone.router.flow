@@ -14,18 +14,11 @@
 
       debug: true
       log: -> console.log.apply console, arguments if @debug
-
       
       isFirstTime: -> @prevDefer is undefined
 
-      getPrevDefer: ->
-        d = @firstTime?() if @isFirstTime()
-        (@prevDefer || new Deferred().resolve()).then -> d
-
-
       getCurrentUrl: (l = location)->
         l.pathname.replace(Backbone.history.root, "/")+l.search+l.hash
-
 
       _bindRoutes: ->
         return if not @routes
@@ -40,17 +33,15 @@
 
           @route i, name, callback
 
-
       navigate: (fragment, interrupt, options=true) ->
         @interrupt() if interrupt is true
         Backbone.history.navigate(fragment, options)
         @
 
-
       activate: (c, args = null) ->
         @log "\n=================", @url = url = @getCurrentUrl()
 
-        @prevDefer = @getPrevDefer()
+        @prevDefer = @pushDefer if @isFirstTime() then @firstTime?(c, url) else @prevDefer
 
         defer = @prevDefer
           .then =>
@@ -87,7 +78,6 @@
           @prevObj = c
           @log "------- ACTIVATED #{url}\n\n"
 
-
       interrupt: ->
         #@log @defs
         @defs = _.filter @defs, (i)-> i?.state?() is 'pending'
@@ -100,5 +90,3 @@
         _.each @defs, (j) -> j.reject()
         @prevObj = null
         @prevDefer = new Deferred().resolve()
-
-
