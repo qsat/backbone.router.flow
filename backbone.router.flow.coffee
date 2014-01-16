@@ -13,7 +13,7 @@
           new Deferred().resolve()
 
       debug: true
-      log: -> console.log.apply console, arguments if @debug
+      log: -> console.log arguments... if @debug
       
       isFirstTime: -> @prevDefer is undefined
 
@@ -29,7 +29,7 @@
           name = @routes[i]
           if not _.isString name and not _.isFunction name
             callback = (fragments)=>
-              @activate.apply @, [name, fragments]
+              @activate [name, fragments]...
 
           @route i, name, callback
 
@@ -43,40 +43,44 @@
 
         @prevDefer = @pushDefer if @isFirstTime() then @firstTime?(c, url) else @prevDefer
 
+        _args = args: args, url: url, prevView: @prevObj, prevUrl: @prevUrl, router: @, view: c
+        hasPrev = @prevUrl or @prevObj
+
         defer = @prevDefer
           .then =>
-            return unless @prevUrl or @prevObj
+            return unless hasPrev
             @log "  LEAVING", @prevUrl
-            @pushDefer @beforeEachLeave?(@prevObj, url, @prevUrl)
+            @pushDefer @beforeEachLeave? [_args]...
 
           .then =>
-            return unless @prevUrl or @prevObj
-            d = @pushDefer @prevObj?.leave(@)
+            return unless hasPrev
+            d = @pushDefer @prevObj?.leave? [_args]...
             d.done => @log "  LEAVED", @prevUrl
 
           .then =>
-            return unless @prevUrl or @prevObj
-            @pushDefer @afterEachLeave?(@, @prevObj, url, @prevUrl)
+            return unless hasPrev
+            @pushDefer @afterEachLeave? [_args]...
             
           .then =>
-            @pushDefer @beforeEachEnter?(@, c, url, @prevUrl)
+            @pushDefer @beforeEachEnter? [_args]...
 
           .then =>
             @log "  ENTERING", url
-            args = _.compact [].concat [@, args, c, url, @prevUrl]
-            d = @pushDefer c.enter.apply c, args
+            d = @pushDefer c?.enter? [_args]...
             d.done => @log "  ENTERED", url
 
           .then =>
-            d = @pushDefer @afterEachEnter?(@, c, url, @prevUrl)
+            d = @pushDefer @afterEachEnter? [_args]...
             @prevObj = null
             @prevUrl = url
-            @visited.push url
             d
 
-        @prevDefer = defer.then =>
+        @prevDefer = defer.done =>
           @prevObj = c
+          @visited.push _args
+
           @log "------- ACTIVATED #{url}\n\n"
+
 
       interrupt: ->
         #@log @defs

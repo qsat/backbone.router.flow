@@ -60,53 +60,61 @@
         return this;
       },
       activate: function(c, args) {
-        var defer, url,
+        var defer, hasPrev, url, _args,
           _this = this;
         if (args == null) {
           args = null;
         }
         this.log("\n=================", this.url = url = this.getCurrentUrl());
         this.prevDefer = this.pushDefer(this.isFirstTime() ? typeof this.firstTime === "function" ? this.firstTime(c, url) : void 0 : this.prevDefer);
+        _args = {
+          args: args,
+          url: url,
+          prevView: this.prevObj,
+          prevUrl: this.prevUrl,
+          router: this,
+          view: c
+        };
+        hasPrev = this.prevUrl || this.prevObj;
         defer = this.prevDefer.then(function() {
-          if (!(_this.prevUrl || _this.prevObj)) {
+          if (!hasPrev) {
             return;
           }
           _this.log("  LEAVING", _this.prevUrl);
-          return _this.pushDefer(typeof _this.beforeEachLeave === "function" ? _this.beforeEachLeave(_this.prevObj, url, _this.prevUrl) : void 0);
+          return _this.pushDefer(typeof _this.beforeEachLeave === "function" ? _this.beforeEachLeave.apply(_this, [_args]) : void 0);
         }).then(function() {
           var d, _ref;
-          if (!(_this.prevUrl || _this.prevObj)) {
+          if (!hasPrev) {
             return;
           }
-          d = _this.pushDefer((_ref = _this.prevObj) != null ? _ref.leave(_this) : void 0);
+          d = _this.pushDefer((_ref = _this.prevObj) != null ? typeof _ref.leave === "function" ? _ref.leave.apply(_ref, [_args]) : void 0 : void 0);
           return d.done(function() {
             return _this.log("  LEAVED", _this.prevUrl);
           });
         }).then(function() {
-          if (!(_this.prevUrl || _this.prevObj)) {
+          if (!hasPrev) {
             return;
           }
-          return _this.pushDefer(typeof _this.afterEachLeave === "function" ? _this.afterEachLeave(_this, _this.prevObj, url, _this.prevUrl) : void 0);
+          return _this.pushDefer(typeof _this.afterEachLeave === "function" ? _this.afterEachLeave.apply(_this, [_args]) : void 0);
         }).then(function() {
-          return _this.pushDefer(typeof _this.beforeEachEnter === "function" ? _this.beforeEachEnter(_this, c, url, _this.prevUrl) : void 0);
+          return _this.pushDefer(typeof _this.beforeEachEnter === "function" ? _this.beforeEachEnter.apply(_this, [_args]) : void 0);
         }).then(function() {
           var d;
           _this.log("  ENTERING", url);
-          args = _.compact([].concat([_this, args, c, url, _this.prevUrl]));
-          d = _this.pushDefer(c.enter.apply(c, args));
+          d = _this.pushDefer(c != null ? typeof c.enter === "function" ? c.enter.apply(c, [_args]) : void 0 : void 0);
           return d.done(function() {
             return _this.log("  ENTERED", url);
           });
         }).then(function() {
           var d;
-          d = _this.pushDefer(typeof _this.afterEachEnter === "function" ? _this.afterEachEnter(_this, c, url, _this.prevUrl) : void 0);
+          d = _this.pushDefer(typeof _this.afterEachEnter === "function" ? _this.afterEachEnter.apply(_this, [_args]) : void 0);
           _this.prevObj = null;
           _this.prevUrl = url;
-          _this.visited.push(url);
           return d;
         });
-        return this.prevDefer = defer.then(function() {
+        return this.prevDefer = defer.done(function() {
           _this.prevObj = c;
+          _this.visited.push(_args);
           return _this.log("------- ACTIVATED " + url + "\n\n");
         });
       },
