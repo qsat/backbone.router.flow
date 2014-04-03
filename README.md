@@ -106,11 +106,11 @@ define [
 ```
 ##処理フロー
 
-1.「/」にアクセス 
-2. indexSceneの「enter」メソッドが呼び出される
-3. そのあと「/about」に遷移
-4. indexSceneの「leave」が呼び出される
-5. fadeOutのプロミスを待つ
-6. aboutScene の「enter」が呼び出される
+* 1.「/」にアクセス 
+* 2. indexSceneの「enter」メソッドが呼び出される
+* 3. そのあと「/about」に遷移
+* 4. indexSceneの「leave」が呼び出される
+* 5. fadeOutのプロミスを待つ
+* 6. aboutScene の「enter」が呼び出される
 
 コンソールにもろもろデバッグ出力が出る
