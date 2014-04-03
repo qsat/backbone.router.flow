@@ -22,9 +22,9 @@ bower install backbone.router.flow
 Example
 =======
 
-Backbone.Routerをざっくり拡張してしまう。（課題）
-Routerをextendしてこのように。
-例は、require.js と使った場合。scriptタグで読み込んだ場合は、冒頭5行不要。
+Backbone.Routerをざっくり拡張してしまう（課題）
+Routerをextendする
+例は require.js を使った場合。scriptタグで読み込んだ場合冒頭のdefine不要。
 
 ###app.coffee
 
