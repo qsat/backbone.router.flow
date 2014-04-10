@@ -1,3 +1,4 @@
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function() {
   var BackboneRouterFlow, Deferred;
 
@@ -163,3 +164,83 @@
   module.exports = BackboneRouterFlow;
 
 }).call(this);
+
+},{}],2:[function(require,module,exports){
+(function() {
+  var Brf, navigate, pageobj, seq, wait;
+
+  Brf = require("../backbone.router.flow");
+
+  wait = function(ms) {
+    var d, tid;
+    d = new $.Deferred();
+    tid = setTimeout((function() {
+      return d.resolve();
+    }), ms);
+    d.name = "wait" + ms;
+    d.fail(function() {
+      clearTimeout(tid);
+      return console.log(d.name, "rejected");
+    });
+    return d;
+  };
+
+  pageobj = {
+    enter: function(args) {
+      var d, prevUrl, url;
+      d = wait(800);
+      url = args.url, prevUrl = args.prevUrl;
+      console.log("    process enter", [url, prevUrl], arguments);
+      return d.fail((function(_this) {
+        return function() {
+          return console.log("       ( interrupt process enter )");
+        };
+      })(this));
+    },
+    leave: function(args) {
+      var d, prevUrl, url;
+      url = args.url, prevUrl = args.prevUrl;
+      d = wait(800);
+      console.log("    process leave", [url, prevUrl]);
+      return d.fail((function(_this) {
+        return function() {
+          return console.log("       ( interrupt process leave )");
+        };
+      })(this));
+    }
+  };
+
+  new Brf({
+    '': pageobj,
+    'post/': pageobj,
+    'post/:id': pageobj
+  }).start({
+    pushState: false
+  });
+
+  navigate = function(path) {
+    return Backbone.history.navigate(path, true);
+  };
+
+  seq = wait(2000).done(function() {
+    return navigate("/post/");
+  }).then(function() {
+    var d;
+    return d = wait(1500);
+  }).done(function() {
+    return navigate("/post/1", true);
+  }).then((function() {
+    return wait(2500);
+  }), function() {
+    return console.log(arguments);
+  }).done(function() {
+    return navigate("/post/2");
+  }).then(function() {
+    return wait(1100);
+  }).done(function() {
+    return navigate("/#");
+  });
+
+}).call(this);
+
+},{"../backbone.router.flow":1}]},{},[2]);
